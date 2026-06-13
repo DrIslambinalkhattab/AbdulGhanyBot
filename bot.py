@@ -38,14 +38,10 @@ def load_state() -> dict:
     return {"current_file": 1, "khatma_count": 1, "zikr_index": 0}
 
 def save_state(state: dict):
-    current = {}
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r", encoding="utf-8") as f:
-            current = json.load(f)
-    state.setdefault("zikr_index", current.get("zikr_index", 0))
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
     print(f"💾 حُفظ التقدم: ملف {state['current_file']} | ختمة {state['khatma_count']}")
+
 # ─────────────────────────────────────────────
 #  Telegram helpers
 # ─────────────────────────────────────────────
