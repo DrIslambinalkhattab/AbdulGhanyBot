@@ -270,8 +270,8 @@ jobs:
         run: |
           git config user.name  "AbdulGhanyBot"
           git config user.email "abdulghanybot@github.com"
-          git add zikr.json
           git pull --rebase origin main
+          git add zikr.json
           git diff --staged --quiet || git commit -m "📿 تحديث الذكر: $(cat zikr.json)"
           git push
 
