@@ -22,25 +22,41 @@ RELEASE_KAHF     = os.environ.get("RELEASE_KAHF", "")
 CAIRO_TZ         = pytz.timezone("Africa/Cairo")
 TOTAL_FILES      = 604
 STATE_FILE       = "state.json"
+ZIKR_FILE        = "zikr.json"
 BASE_URL         = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # ─────────────────────────────────────────────
-#  State
+#  State — القرآن (state.json)
 # ─────────────────────────────────────────────
 def load_state() -> dict:
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r", encoding="utf-8") as f:
             state = json.load(f)
         state.setdefault("khatma_count", 1)
-        state.setdefault("zikr_index", 0) 
         state.setdefault("current_file", 1)
         return state
-    return {"current_file": 1, "khatma_count": 1, "zikr_index": 0}
+    return {"current_file": 1, "khatma_count": 1}
 
 def save_state(state: dict):
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
     print(f"💾 حُفظ التقدم: ملف {state['current_file']} | ختمة {state['khatma_count']}")
+
+# ─────────────────────────────────────────────
+#  State — الذكر (zikr.json)
+# ─────────────────────────────────────────────
+def load_zikr_state() -> dict:
+    if os.path.exists(ZIKR_FILE):
+        with open(ZIKR_FILE, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        state.setdefault("zikr_index", 0)
+        return state
+    return {"zikr_index": 0}
+
+def save_zikr_state(state: dict):
+    with open(ZIKR_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+    print(f"📿 حُفظ الذكر: index {state['zikr_index']}")
 
 # ─────────────────────────────────────────────
 #  Telegram helpers
@@ -389,7 +405,7 @@ AZKAAR = [
 ]
 
 def task_hourly_zikr():
-    state = load_state()
+    state = load_zikr_state()
     idx   = state["zikr_index"]
 
     icon, zikr, hadith = AZKAAR[idx]
@@ -401,7 +417,7 @@ def task_hourly_zikr():
     send_text(msg)
 
     state["zikr_index"] = (idx + 1) % len(AZKAAR)
-    save_state(state)
+    save_zikr_state(state)
 
 # ─────────────────────────────────────────────
 #  نقطة الدخول
