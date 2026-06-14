@@ -93,13 +93,13 @@ def send_error_alert(task_name: str, error: Exception):
     
     # 3. بناء الرسالة مع تاغات HTML المتوافقة تماماً
     msg = (
-        f"⚠️ <blockquote><b>خطأ في مهمة:</b> <code>{task_safe}</code></blockquote>\n\n"
+        f"<blockquote><b>⚠️ خطأ في مهمة:</b> <code>{task_safe}</code></blockquote>\n\n"
         f"<b>النوع:</b> <code>{error_type_safe}</code>\n"
         f"<b>التفاصيل:</b> <code>{error_details_safe}</code>\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"<b>الـ Traceback:</b>\n<code>{tb_safe}</code>\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"<blockquote>🔔 <b><a href='https://t.me/DrIslambinalkhattab_1'>@DrIslambinalkhattab_1</a> راجع الأمر.</b></blockquote>"
+        f"<blockquote>🔔 <b><a href='tg://user?id=1640238709'>د. إسلام</a> راجع الأمر.</b></blockquote>"
     )
     
     try:
