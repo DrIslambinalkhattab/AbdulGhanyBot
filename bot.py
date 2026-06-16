@@ -104,7 +104,7 @@ def send_error_alert(task_name: str, error: Exception):
         f"━━━━━━━━━━━━━━━━\n"
         f"<b>الـ Traceback:</b>\n<code>{tb_safe}</code>\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"<blockquote>🔔 <b><a href='tg://user?id=1640238709'>د. إسلام</a> راجع الأمر.</b></blockquote>"
+        f"<blockquote>🔔 <b><a href='tg://user?id=1640238709'>اسلام</a> راجع المشكله.</b></blockquote>"
     )
     
     try:
