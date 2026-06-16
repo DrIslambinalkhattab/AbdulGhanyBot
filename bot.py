@@ -46,17 +46,17 @@ def save_state(state: dict):
 #  State — الذكر (zikr.json)
 # ─────────────────────────────────────────────
 def load_zikr_state() -> dict:
+    today = datetime.now(CAIRO_TZ).strftime("%Y-%m-%d")
+    state = {"zikr_index": 0, "day": "", "order": []}
     if os.path.exists(ZIKR_FILE):
         with open(ZIKR_FILE, "r", encoding="utf-8") as f:
             state = json.load(f)
-        state.setdefault("zikr_index", 0)
-        return state
-    return {"zikr_index": 0}
-
-def save_zikr_state(state: dict):
-    with open(ZIKR_FILE, "w", encoding="utf-8") as f:
-        json.dump(state, f, ensure_ascii=False, indent=2)
-    print(f"📿 حُفظ الذكر: index {state['zikr_index']}")
+    if state.get("day") != today:
+        order = list(range(len(AZKAAR)))
+        random.shuffle(order)
+        state = {"zikr_index": 0, "day": today, "order": order}
+        save_zikr_state(state)
+    return state
 
 # ─────────────────────────────────────────────
 #  Telegram helpers
@@ -407,16 +407,21 @@ AZKAAR = [
 def task_hourly_zikr():
     state = load_zikr_state()
     idx   = state["zikr_index"]
+    order = state["order"]
 
-    icon, zikr, hadith = AZKAAR[idx]
+    if idx >= len(order):
+        print("✅ تم إرسال كل أذكار اليوم")
+        return
+
+    icon, zikr, hadith = AZKAAR[order[idx]]
     msg = (
         f"<blockquote><b>{zikr}</b></blockquote>\n"
         f"<i><b>{hadith}</b></i>\n"
     )
-    print(f"📿 إرسال الذكر رقم {idx + 1} من {len(AZKAAR)}")
+    print(f"📿 إرسال الذكر {idx + 1}/14 — index {order[idx]}")
     send_text(msg)
 
-    state["zikr_index"] = (idx + 1) % len(AZKAAR)
+    state["zikr_index"] = idx + 1
     save_zikr_state(state)
 
 # ─────────────────────────────────────────────
