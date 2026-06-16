@@ -5,7 +5,7 @@ on:
     - cron: '37 2 * * *'   # 📖 PDF + MP3       — 5:30 ص القاهرة (UTC+3)
     - cron: '7 3 * * *'    # 🌅 أذكار الصباح    — 6:00 ص القاهرة
     - cron: '37 13 * * *'  # 🌆 أذكار المساء    — 4:30 م القاهرة
-    - cron: '37 7 * * 5'   # 📖 سورة الكهف     — جمعة 10:30 ص
+    - cron: '37 8 * * 5'   # 📖 (بعد الصلاة على النبي) سورة الكهف     — جمعة 10:30 ص
     - cron: '7 7 * * *'    # ☀️ تذكير الضحى    — 10:00 ص القاهرة
     - cron: '7 11 * * *'   # 🌤 تذكير الظهر    — 2:00 م القاهرة
     - cron: '7 18 * * *'   # 🌙 تذكير الليل    — 9:00 م القاهرة
@@ -126,7 +126,7 @@ jobs:
   kahf:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'kahf') ||
-      (github.event_name == 'schedule' && github.event.schedule == '37 7 * * 5')
+      (github.event_name == 'schedule' && github.event.schedule == '37 8 * * 5')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
