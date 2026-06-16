@@ -58,6 +58,11 @@ def load_zikr_state() -> dict:
         save_zikr_state(state)
     return state
 
+def save_zikr_state(state: dict):
+    with open(ZIKR_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+    print(f"💾 حُفظ الذكر: index {state['zikr_index']} | يوم {state['day']}")
+
 # ─────────────────────────────────────────────
 #  Telegram helpers
 # ─────────────────────────────────────────────
