@@ -419,10 +419,8 @@ def task_hourly_zikr():
         return
 
     icon, zikr, hadith = AZKAAR[order[idx]]
-    msg = (
-        f"<blockquote><b>{zikr}</b></blockquote>\n"
-        f"<i><b>{hadith}</b></i>\n"
-    )
+    msg = f"<blockquote><b>{zikr}</b></blockquote>\n"
+    
     print(f"📿 إرسال الذكر {idx + 1}/14 — index {order[idx]}")
     send_text(msg)
 
