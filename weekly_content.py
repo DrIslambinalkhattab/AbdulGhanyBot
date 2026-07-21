@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import requests
 from datetime import datetime
 import pytz
@@ -7,19 +8,40 @@ import pytz
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID  = os.environ.get("CHAT_ID",  "-1001949919685")
 TOPIC_ID = os.environ.get("TOPIC_ID", "25894")
+# 🆕 شات وتوبيك منفصلين لتنبيهات الأخطاء
+ERROR_CHAT_ID  = os.environ.get("ERROR_CHAT_ID",  "-1003305234680")
+ERROR_TOPIC_ID = os.environ.get("ERROR_TOPIC_ID", "1335")
 CAIRO_TZ = pytz.timezone("Africa/Cairo")
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+LOG_FILE = "daily_log.json"
 
-def _base_params():
-    return {"chat_id": CHAT_ID, "message_thread_id": TOPIC_ID}
+def _base_params(chat_id: str = None, topic_id: str = None):
+    return {"chat_id": chat_id or CHAT_ID, "message_thread_id": topic_id or TOPIC_ID}
 
-def send_text(text: str):
+def send_text(text: str, chat_id: str = None, topic_id: str = None):
     r = requests.post(
         f"{BASE_URL}/sendMessage",
-        data={**_base_params(), "text": text, "parse_mode": "HTML"},
+        data={**_base_params(chat_id, topic_id), "text": text, "parse_mode": "HTML"},
         timeout=10,
     )
     print(f"📨 {r.status_code}")
+
+def log_event(label: str, detail: str = ""):
+    """يسجل حدث حصل النهاردة عشان يظهر في الملخص اليومي (نفس ملف daily_log.json)"""
+    try:
+        today = datetime.now(CAIRO_TZ).strftime("%Y-%m-%d")
+        log = {"day": today, "events": []}
+        if os.path.exists(LOG_FILE):
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+            if saved.get("day") == today:
+                log = saved
+        time_str = datetime.now(CAIRO_TZ).strftime("%H:%M")
+        log["events"].append({"time": time_str, "label": label, "detail": detail})
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump(log, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"⚠️ فشل تسجيل الحدث في اللوج: {e}")
 
 def send_error_alert(task_name: str, error: Exception):
     """يُرسل تنبيه خطأ في الشات مع mention للمسؤول بشكل آمن تماماً"""
@@ -54,7 +76,7 @@ def send_error_alert(task_name: str, error: Exception):
     try:
         response = requests.post(
             f"{BASE_URL}/sendMessage",
-            data={**_base_params(), "text": msg, "parse_mode": "HTML"},
+            data={**_base_params(ERROR_CHAT_ID, ERROR_TOPIC_ID), "text": msg, "parse_mode": "HTML"},
             timeout=10
         )
         if not response.ok:
@@ -83,11 +105,13 @@ def task_remind_fasting_monday():
     print("🌙 تذكير صيام الاثنين")
     msg = FASTING_TEMPLATE.format(day="الإثنين")
     send_text(msg)
+    log_event("🌙 تذكير صيام الاثنين")
 
 def task_remind_fasting_thursday():
     print("🌙 تذكير صيام الخميس")
     msg = FASTING_TEMPLATE.format(day="الخميس")
     send_text(msg)
+    log_event("🌙 تذكير صيام الخميس")
 
 TASKS = {
     "fasting_monday": task_remind_fasting_monday,

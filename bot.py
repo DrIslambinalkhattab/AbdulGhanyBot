@@ -16,6 +16,9 @@ import random
 BOT_TOKEN        = os.environ["BOT_TOKEN"]
 CHAT_ID  = os.environ.get("CHAT_ID",  "-1001949919685")
 TOPIC_ID = os.environ.get("TOPIC_ID", "25894")
+# 🆕 شات وتوبيك منفصلين لتنبيهات الأخطاء والملخص اليومي
+ERROR_CHAT_ID  = os.environ.get("ERROR_CHAT_ID",  "-1003305234680")
+ERROR_TOPIC_ID = os.environ.get("ERROR_TOPIC_ID", "1335")
 RELEASE_BASE     = os.environ.get("RELEASE_BASE", "")
 RELEASE_BASE_MP3 = os.environ.get("RELEASE_BASE_MP3", "")
 RELEASE_KAHF     = os.environ.get("RELEASE_KAHF", "")
@@ -23,6 +26,7 @@ CAIRO_TZ         = pytz.timezone("Africa/Cairo")
 TOTAL_FILES      = 604
 STATE_FILE       = "state.json"
 ZIKR_FILE        = "zikr.json"
+LOG_FILE         = "daily_log.json"
 BASE_URL         = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # ─────────────────────────────────────────────
@@ -64,15 +68,45 @@ def save_zikr_state(state: dict):
     print(f"💾 حُفظ الذكر: index {state['zikr_index']} | يوم {state['day']}")
 
 # ─────────────────────────────────────────────
+#  📝 سجل أحداث اليوم (daily_log.json) — لِلمُلخص اليومي
+# ─────────────────────────────────────────────
+def load_log() -> dict:
+    today = datetime.now(CAIRO_TZ).strftime("%Y-%m-%d")
+    log = {"day": today, "events": []}
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            saved = json.load(f)
+        if saved.get("day") == today:
+            log = saved
+    return log
+
+def save_log(log: dict):
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(log, f, ensure_ascii=False, indent=2)
+
+def log_event(label: str, detail: str = ""):
+    """يسجل حدث حصل النهاردة عشان يظهر في الملخص اليومي"""
+    try:
+        log = load_log()
+        time_str = datetime.now(CAIRO_TZ).strftime("%H:%M")
+        log["events"].append({"time": time_str, "label": label, "detail": detail})
+        save_log(log)
+    except Exception as e:
+        print(f"⚠️ فشل تسجيل الحدث في اللوج: {e}")
+
+# ─────────────────────────────────────────────
 #  Telegram helpers
 # ─────────────────────────────────────────────
-def _base_params() -> dict:
-    return {"chat_id": CHAT_ID, "message_thread_id": TOPIC_ID}
+def _base_params(chat_id: str = None, topic_id: str = None) -> dict:
+    return {
+        "chat_id": chat_id or CHAT_ID,
+        "message_thread_id": topic_id or TOPIC_ID,
+    }
 
-def send_text(text: str):
+def send_text(text: str, chat_id: str = None, topic_id: str = None):
     r = requests.post(
         f"{BASE_URL}/sendMessage",
-        data={**_base_params(), "text": text, "parse_mode": "HTML"},
+        data={**_base_params(chat_id, topic_id), "text": text, "parse_mode": "HTML"},
         timeout=10,
     )
     print(f"📨 {r.status_code}")
@@ -110,7 +144,7 @@ def send_error_alert(task_name: str, error: Exception):
     try:
         response = requests.post(
             f"{BASE_URL}/sendMessage",
-            data={**_base_params(), "text": msg, "parse_mode": "HTML"},
+            data={**_base_params(ERROR_CHAT_ID, ERROR_TOPIC_ID), "text": msg, "parse_mode": "HTML"},
             timeout=10
         )
         if not response.ok:
@@ -234,6 +268,8 @@ def task_daily_files():
     state["current_file"] = (n % TOTAL_FILES) + 1
     save_state(state)
 
+    log_event("📖 الورد اليومي", f"الورد رقم {num} • الختمة {khatma} • {pct}%")
+
 # ─────────────────────────────────────────────
 #  أذكار الصباح
 # ─────────────────────────────────────────────
@@ -250,6 +286,7 @@ def task_sabah():
     )
     with open("Zeikr/al-azkar.pdf", "rb") as f:
         send_document_bytes(f.read(), "al-azkar.pdf", caption)
+    log_event("🌅 أذكار الصباح")
 
 # ─────────────────────────────────────────────
 #  أذكار المساء
@@ -267,6 +304,7 @@ def task_masa():
     )
     with open("Zeikr/al-azkar.pdf", "rb") as f:
         send_document_bytes(f.read(), "al-azkar.pdf", caption)
+    log_event("🌆 أذكار المساء")
 
 # ─────────────────────────────────────────────
 #  سورة الكهف
@@ -283,6 +321,7 @@ def task_friday_kahf():
         "<blockquote><b>📖 سورة الكهف</b></blockquote>")
     send_audio_bytes(download(f"{RELEASE_KAHF}/al-kahf.mp3"), "al-kahf.mp3",
         "<blockquote><b>🎧 تلاوة سورة الكهف</b></blockquote>")
+    log_event("📖 سورة الكهف")
 
 # ─────────────────────────────────────────────
 #  التذكيرات
@@ -298,6 +337,7 @@ def task_remind_morning():
          "<blockquote><b><i>«اللهم أعنّا على ذكرك وشكرك وحسن عبادتك»</i></b></blockquote>"),
     ]
     send_text(random.choice(msgs))
+    log_event("☀️ تذكير الضحى")
 
 def task_remind_midday():
     msgs = [
@@ -310,6 +350,7 @@ def task_remind_midday():
          "<blockquote><b><i>ورد القرآن لسه بينتظرك لو ما كملتش</i></b></blockquote>"),
     ]
     send_text(random.choice(msgs))
+    log_event("🌤 تذكير الظهر")
 
 def task_remind_night():
     msgs = [
@@ -324,6 +365,7 @@ def task_remind_night():
          "<blockquote><b><i>لا تنسَ أذكار النوم، اللهم تقبّل منا ومنكم</i></b></blockquote>"),
     ]
     send_text(random.choice(msgs))
+    log_event("🌙 تذكير الليل")
 
 # ─────────────────────────────────────────────
 #  الصلاة على النبي ﷺ يوم الجمعة
@@ -361,6 +403,7 @@ def task_friday_salah(slot: str = ""):
         raise ValueError(f"❌ slot غير معروف: '{slot}' — القيم المتاحة هي: {list(slots.keys())}")
     
     send_text(slots[slot])
+    log_event("💛 صلاة على النبي", f"جمعة — {slot}")
 
 # ─────────────────────────────────────────────
 #  ذكر الساعة
@@ -427,6 +470,41 @@ def task_hourly_zikr():
     state["zikr_index"] = idx + 1
     save_zikr_state(state)
 
+    log_event("📿 ذكر الساعة", f"الذكر {idx + 1}/14")
+
+# ─────────────────────────────────────────────
+#  📊 الملخص اليومي
+# ─────────────────────────────────────────────
+def task_daily_summary():
+    log      = load_log()
+    events   = log.get("events", [])
+    date_str = datetime.now(CAIRO_TZ).strftime("%d / %m / %Y")
+
+    if not events:
+        body = "لا توجد أحداث مسجّلة اليوم."
+    else:
+        # تجميع الأحداث حسب النوع (label) مع عرض تفاصيلها بالترتيب الزمني
+        lines = []
+        for ev in events:
+            detail = f" — <i>{ev['detail']}</i>" if ev.get("detail") else ""
+            lines.append(f"🕐 <b>{ev['time']}</b> • {ev['label']}{detail}")
+        body = "\n".join(lines)
+
+    msg = (
+        f"<blockquote><b>📊 ملخص اليوم — {date_str}</b></blockquote>\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"{body}\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"📌 <b>إجمالي الأحداث:</b> {len(events)}\n"
+        f"<blockquote>🤲 اللهم تقبّل منا صالح الأعمال</blockquote>"
+    )
+
+    send_text(msg, chat_id=ERROR_CHAT_ID, topic_id=ERROR_TOPIC_ID)
+
+    # تصفير اللوج بعد إرسال الملخص
+    save_log({"day": datetime.now(CAIRO_TZ).strftime("%Y-%m-%d"), "events": []})
+    print(f"📊 تم إرسال ملخص اليوم ({len(events)} حدث) وتصفير السجل")
+
 # ─────────────────────────────────────────────
 #  نقطة الدخول
 # ─────────────────────────────────────────────
@@ -444,6 +522,7 @@ TASKS = {
     "friday_salah_midday"  : lambda: task_friday_salah("midday"),
     "friday_salah_asr"     : lambda: task_friday_salah("asr"),
     "hourly_zikr"          : task_hourly_zikr,
+    "daily_summary"        : task_daily_summary,
 }
 
 if __name__ == "__main__":
