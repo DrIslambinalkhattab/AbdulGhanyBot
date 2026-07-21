@@ -478,7 +478,10 @@ def task_hourly_zikr():
 def task_daily_summary():
     log      = load_log()
     events   = log.get("events", [])
-    date_str = datetime.now(CAIRO_TZ).strftime("%d / %m / %Y")
+    ARABIC_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+                     "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+    now      = datetime.now(CAIRO_TZ)
+    date_str = f"{now.day} {ARABIC_MONTHS[now.month - 1]} {now.year}"
 
     if not events:
         body = "لا توجد أحداث مسجّلة اليوم."
@@ -491,11 +494,11 @@ def task_daily_summary():
         body = "\n".join(lines)
 
     msg = (
-        f"<blockquote><b>📊 ملخص اليوم — {date_str}</b></blockquote>\n"
+        f"<blockquote><b>📊 ملخص اليوم - {date_str}</b></blockquote>\n"
         f"{body}\n"
         f"━━━━━━━━━━━━\n"
         f"● <b>إجمالي الأحداث:</b> {len(events)}\n"
-        f"<blockquote><a href='tg://user?id=1640238709'>اسلام</a> ده ملخص احداث اليوم 🔔</blockquote>"
+        f"<blockquote><a href='tg://user?id=1640238709'>اسلام</a> ده ملخص احداث اليوم ✓</blockquote>"
     )
 
     send_text(msg, chat_id=ERROR_CHAT_ID, topic_id=ERROR_TOPIC_ID)
