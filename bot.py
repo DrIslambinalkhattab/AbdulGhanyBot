@@ -498,7 +498,7 @@ def task_daily_summary():
         f"{body}\n"
         f"━━━━━━━━━━━━\n"
         f"● <b>إجمالي الأحداث:</b> {len(events)}\n"
-        f"<blockquote><a href='tg://user?id=1640238709'>اسلام</a> ده ملخص احداث اليوم ✓</blockquote>"
+        f"<blockquote><a href='tg://user?id=1640238709'>اسلام</a> دا ملخص احداث اليوم ✓</blockquote>"
     )
 
     send_text(msg, chat_id=ERROR_CHAT_ID, topic_id=ERROR_TOPIC_ID)
