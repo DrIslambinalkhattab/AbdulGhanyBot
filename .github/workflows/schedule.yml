@@ -30,6 +30,7 @@ on:
     - cron: '13 17 * * *'    # 📿 ذكر الساعة — 8:00 م
     - cron: '13 19 * * *'    # 📿 ذكر الساعة — 10:00 م
     - cron: '13 20 * * *'    # 📿 ذكر الساعة — 11:00 م
+    - cron: '45 20 * * *'    # 📊 الملخص اليومي — 11:45 م القاهرة (UTC+3)
 
   workflow_dispatch:
     inputs:
@@ -50,6 +51,7 @@ on:
           - hourly_zikr
           - fasting_monday
           - fasting_thursday
+          - daily_summary
 
 jobs:
 
@@ -83,7 +85,7 @@ jobs:
           git stash --include-untracked
           git pull --rebase origin main
           git stash pop || true
-          git add state.json
+          git add state.json daily_log.json
           git diff --staged --quiet || git commit -m "📊 تحديث التقدم: $(cat state.json)"
           git push
 
@@ -92,8 +94,12 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'sabah') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 3 * * *')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -104,14 +110,28 @@ jobs:
           CHAT_ID:      ${{ secrets.CHAT_ID }}
           TOPIC_ID:     ${{ secrets.TOPIC_ID }}
         run: python bot.py sabah
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   masa:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'masa') ||
       (github.event_name == 'schedule' && github.event.schedule == '37 13 * * *')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -122,14 +142,28 @@ jobs:
           CHAT_ID:      ${{ secrets.CHAT_ID }}
           TOPIC_ID:     ${{ secrets.TOPIC_ID }}
         run: python bot.py masa
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   kahf:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'kahf') ||
       (github.event_name == 'schedule' && github.event.schedule == '37 8 * * 5')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -141,14 +175,28 @@ jobs:
           TOPIC_ID:     ${{ secrets.TOPIC_ID }}
           RELEASE_KAHF: ${{ secrets.RELEASE_KAHF }}
         run: python bot.py kahf
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   remind-morning:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'remind_morning') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 7 * * *')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -159,14 +207,28 @@ jobs:
           CHAT_ID:   ${{ secrets.CHAT_ID }}
           TOPIC_ID:  ${{ secrets.TOPIC_ID }}
         run: python bot.py remind_morning
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   remind-midday:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'remind_midday') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 11 * * *')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -177,14 +239,28 @@ jobs:
           CHAT_ID:   ${{ secrets.CHAT_ID }}
           TOPIC_ID:  ${{ secrets.TOPIC_ID }}
         run: python bot.py remind_midday
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   remind-night:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'remind_night') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 18 * * *')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -195,6 +271,16 @@ jobs:
           CHAT_ID:   ${{ secrets.CHAT_ID }}
           TOPIC_ID:  ${{ secrets.TOPIC_ID }}
         run: python bot.py remind_night
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   friday-salah:
     if: >
@@ -206,8 +292,12 @@ jobs:
         github.event.schedule == '7 13 * * 5'
       ))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -225,6 +315,16 @@ jobs:
           elif [ "$SCHED" = "7 13 * * 5" ]; then python bot.py friday_salah_asr
           else                                   python bot.py friday_salah
           fi
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   hourly-zikr:
     if: >
@@ -278,8 +378,12 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'fasting_monday') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 17 * * 0')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -290,14 +394,28 @@ jobs:
           CHAT_ID:   ${{ secrets.CHAT_ID }}
           TOPIC_ID:  ${{ secrets.TOPIC_ID }}
         run: python weekly_content.py fasting_monday
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
 
   fasting-thursday:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'fasting_thursday') ||
       (github.event_name == 'schedule' && github.event.schedule == '7 17 * * 3')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -308,3 +426,45 @@ jobs:
           CHAT_ID:   ${{ secrets.CHAT_ID }}
           TOPIC_ID:  ${{ secrets.TOPIC_ID }}
         run: python weekly_content.py fasting_thursday
+      - name: 💾 Save log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تحديث سجل اليوم"
+          git push
+
+  daily-summary:
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'daily_summary') ||
+      (github.event_name == 'schedule' && github.event.schedule == '45 20 * * *')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: 🤖 Run bot
+        env:
+          BOT_TOKEN:      ${{ secrets.BOT_TOKEN }}
+          ERROR_CHAT_ID:  ${{ secrets.ERROR_CHAT_ID }}
+          ERROR_TOPIC_ID: ${{ secrets.ERROR_TOPIC_ID }}
+        run: python bot.py daily_summary
+      - name: 💾 Reset log
+        run: |
+          git config user.name  "AbdulGhanyBot"
+          git config user.email "abdulghanybot@github.com"
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
+          git add daily_log.json
+          git diff --staged --quiet || git commit -m "📊 تصفير سجل اليوم بعد الملخص"
+          git push
