@@ -494,7 +494,7 @@ def task_daily_summary():
         body = "\n".join(lines)
 
     msg = (
-        f"<blockquote><b>📊 ملخص اليوم - {date_str}</b></blockquote>\n"
+        f"<blockquote><b>ملخص اليوم - {date_str} 📊</b></blockquote>\n"
         f"{body}\n"
         f"━━━━━━━━━━━━\n"
         f"● <b>إجمالي الأحداث:</b> {len(events)}\n"
