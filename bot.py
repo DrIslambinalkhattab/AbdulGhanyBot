@@ -5,6 +5,7 @@ AbdulGhanyBot — يشتغل مرة واحدة عن طريق GitHub Actions
 import os
 import json
 import sys
+import time
 import requests
 from datetime import datetime
 import pytz
@@ -159,6 +160,7 @@ def send_document_bytes(data: bytes, filename: str, caption: str = ""):
         f"{BASE_URL}/sendDocument",
         data={**_base_params(), "caption": caption, "parse_mode": "HTML"},
         files=files,
+        timeout=(15, 180),
     )
     print(f"📄 PDF: {r.status_code} | {r.json().get('description','OK')}")
 
@@ -169,19 +171,41 @@ def send_audio_bytes(data: bytes, filename: str, caption: str = ""):
         data={**_base_params(), "caption": caption, "parse_mode": "HTML",
               "title": filename.replace(".mp3",""), "performer": "ختمة القرآن"},
         files=files,
+        timeout=(15, 180),
     )
     print(f"🎵 Audio: {r.status_code} | {r.json().get('description','OK')}")
 
-def download(url: str) -> bytes:
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+
+def download(url: str, retries: int = 5, backoff: int = 5) -> bytes:
+    """يحمّل الملف مع إعادة محاولة تلقائية عند أخطاء السيرفر المؤقتة (504 وغيرها)"""
     print(f"⬇️  جاري التحميل: {url}")
     headers = {"Accept": "application/octet-stream", "User-Agent": "Mozilla/5.0"}
-    r = requests.get(url, headers=headers, allow_redirects=True, timeout=60)
-    r.raise_for_status()
-    size_kb = len(r.content) // 1024
-    print(f"   ✅ {size_kb} KB | {r.status_code}")
-    if size_kb > 50 * 1024:
-        raise ValueError(f"الملف أكبر من 50 MB ({size_kb} KB) — تليجرام سيرفضه")
-    return r.content
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.get(url, headers=headers, allow_redirects=True,
+                             timeout=(15, 180))  # (اتصال, قراءة)
+            if r.status_code in RETRYABLE_STATUS:
+                raise requests.HTTPError(
+                    f"{r.status_code} Server Error for url: {url}", response=r)
+            r.raise_for_status()  # أخطاء مثل 404 تفشل فوراً بدون إعادة
+            size_kb = len(r.content) // 1024
+            print(f"   ✅ {size_kb} KB | {r.status_code}")
+            if size_kb > 50 * 1024:
+                raise ValueError(f"الملف أكبر من 50 MB ({size_kb} KB) — تليجرام سيرفضه")
+            return r.content
+        except (requests.ConnectionError, requests.Timeout) as e:
+            err = e
+        except requests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status not in RETRYABLE_STATUS:
+                raise
+            err = e
+        if attempt == retries:
+            raise err
+        wait = backoff * attempt  # 5s, 10s, 15s, 20s
+        print(f"   ⚠️ محاولة {attempt}/{retries} فشلت ({type(err).__name__}: {err}) — إعادة بعد {wait}s")
+        time.sleep(wait)
 
 # ─────────────────────────────────────────────
 #  Progress bar
@@ -250,8 +274,11 @@ def task_daily_files():
 
     # 2. إرسال الملفات أولاً
     print(f"📤 إرسال الملف رقم {num} | الختمة {khatma} ({pct}%)")
-    send_document_bytes(download(f"{RELEASE_BASE}/{num}.pdf"), f"{num}.pdf", caption_pdf)
-    send_audio_bytes(download(f"{RELEASE_BASE_MP3}/{num}.mp3"), f"{num}.mp3", caption_mp3)
+    # نحمّل الاثنين الأول؛ لو أي تحميل فشل ما يتبعتش حاجة (عشان إعادة التشغيل ما تكرّرش الـ PDF)
+    pdf_bytes = download(f"{RELEASE_BASE}/{num}.pdf")
+    mp3_bytes = download(f"{RELEASE_BASE_MP3}/{num}.mp3")
+    send_document_bytes(pdf_bytes, f"{num}.pdf", caption_pdf)
+    send_audio_bytes(mp3_bytes, f"{num}.mp3", caption_mp3)
 
     # 3. التحقق من اكتمال الختمة وإرسال التهنئة (بعد إرسال الملفات)
     if n == TOTAL_FILES:
@@ -317,9 +344,11 @@ def task_friday_kahf():
         "<i>أَضَاءَ لَهُ مِنَ النُّورِ مَا بَيْنَ الْجُمُعَتَيْنِ»</i>\n"
         "<blockquote><b><i>أكثر من الصلاة على النبي ﷺ، وتحرَّ ساعة الإجابة واجعل لعبدالغني نصيبًا من دعائك 🩶  </i></b></blockquote>"
     )
-    send_document_bytes(download(f"{RELEASE_KAHF}/al-kahf.pdf"), "al-kahf.pdf",
+    pdf_bytes = download(f"{RELEASE_KAHF}/al-kahf.pdf")
+    mp3_bytes = download(f"{RELEASE_KAHF}/al-kahf.mp3")
+    send_document_bytes(pdf_bytes, "al-kahf.pdf",
         "<blockquote><b>📖 سورة الكهف</b></blockquote>")
-    send_audio_bytes(download(f"{RELEASE_KAHF}/al-kahf.mp3"), "al-kahf.mp3",
+    send_audio_bytes(mp3_bytes, "al-kahf.mp3",
         "<blockquote><b>🎧 تلاوة سورة الكهف</b></blockquote>")
     log_event("📖 سورة الكهف")
 
